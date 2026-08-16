@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>ระบบรายงานการแจ้งซ่อม - PRTC</title>
 
     <!-- Tailwind CSS CDN -->
@@ -18,6 +18,28 @@
     <style>
         * {
             font-family: 'Sarabun', sans-serif;
+            box-sizing: border-box;
+        }
+        /* รองรับการย่อ-ขยายสเกลตามหน้าจอแบบ Dynamic Scale */
+        
+         :root {
+            --app-scale: 1;
+        }
+        
+        #app-scaler {
+            transform-origin: top center;
+            transition: transform 0.2s ease-in-out;
+            width: 100%;
+        }
+        /* Responsive typography & layout helpers */
+        
+        @media (max-width: 640px) {
+            .table-responsive-card {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
         }
         
         @media screen {
@@ -88,16 +110,14 @@
     </script>
 </head>
 
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-12">
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-12 overflow-x-hidden">
 
     <!-- =======================================================
          หน้าโหลดเว็บ (Loading Screen)
          ======================================================= -->
     <div id="loadingScreen" class="fixed inset-0 bg-brand-900 z-50 flex flex-col items-center justify-center text-white no-print">
         <div class="relative flex items-center justify-center mb-5">
-            <!-- Spinner วงแหวนหมุนรอบ -->
             <div class="w-24 h-24 border-4 border-blue-400/30 border-t-amber-400 rounded-full animate-spin"></div>
-            <!-- โลโก้ตรงกลาง -->
             <div class="absolute w-14 h-14 flex items-center justify-center">
                 <img src="images/logo-prtc.png" alt="โลโก้ PRTC" class="w-full h-full object-contain">
             </div>
@@ -108,239 +128,258 @@
         </p>
     </div>
 
-    <!-- Navbar ด้านบน -->
-    <header class="bg-brand-900 text-white shadow-md mb-6 sticky top-0 z-40 no-print">
-        <div class="max-w-5xl mx-auto px-4 py-3.5 flex flex-wrap justify-between items-center gap-3">
-            <div class="flex items-center gap-3">
-                <img src="images/logo-prtc.png" alt="โลโก้ PRTC" class="w-10 h-10 object-contain">
-                <div>
-                    <h1 class="text-sm font-bold leading-tight">วิทยาลัยเทคโนโลยีพระมหาไถ่ พัทยา</h1>
-                    <p class="text-[11px] text-blue-200">ระบบรายงานการแจ้งซ่อมออนไลน์ (E-Repair)</p>
+    <!-- Wrapper สำหรับปรับอัตราส่วนขนาดหน้าจอ -->
+    <div id="app-scaler">
+
+        <!-- Navbar ด้านบน -->
+        <header class="bg-brand-900 text-white shadow-md mb-6 sticky top-0 z-40 no-print">
+            <div class="max-w-5xl mx-auto px-4 py-3.5 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center gap-3">
+                    <img src="images/logo-prtc.png" alt="โลโก้ PRTC" class="w-10 h-10 object-contain">
+                    <div>
+                        <h1 class="text-sm sm:text-base font-bold leading-tight">วิทยาลัยเทคโนโลยีพระมหาไถ่ พัทยา</h1>
+                        <p class="text-[11px] text-blue-200">ระบบรายงานการแจ้งซ่อมออนไลน์ (E-Repair)</p>
+                    </div>
                 </div>
-            </div>
 
-            <!-- กลุ่มปุ่มเปลี่ยนหน้า / ล็อกอิน / ล็อกเอาต์ -->
-            <div class="flex items-center gap-2">
-                <button type="button" id="btnNavUser" onclick="switchView('user')" class="bg-white text-brand-900 hover:bg-blue-50 text-xs font-bold px-3.5 py-2 rounded-xl shadow transition inline-flex items-center gap-1.5">
-                    <i class="fas fa-edit"></i> ฟอร์มแจ้งซ่อม
-                </button>
+                <!-- เครื่องมือปรับอัตราส่วนหน้าจอ + เมนูล็อกอิน -->
+                <div class="flex items-center flex-wrap gap-2">
 
-                <div id="adminAuthArea" class="flex items-center gap-2">
-                    <button type="button" id="btnLoginNav" onclick="openModal('adminLoginModal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-4 py-2 rounded-xl shadow-lg transition inline-flex items-center gap-1.5 ring-2 ring-amber-300 active:scale-95">
-                        <i class="fas fa-lock"></i> 🔐 เข้าสู่ระบบแอดมิน
+                    <!-- แถบปุ่มปรับสเกลขนาดหน้าจอ (Zoom / Screen Ratio Controls) -->
+                    <div class="flex items-center bg-brand-800/80 border border-blue-400/40 rounded-xl px-2 py-1 gap-1 text-xs shadow-inner">
+                        <span class="text-[11px] text-blue-200 font-semibold hidden md:inline mr-1"><i class="fas fa-display mr-1"></i>ขนาดจอ:</span>
+                        <button type="button" onclick="setScreenScale(0.9)" class="px-2 py-0.5 rounded-lg hover:bg-white/20 transition active:scale-95 text-blue-100 font-bold" title="ย่อขนาด (90%)">
+                            <i class="fas fa-magnifying-glass-minus"></i> 90%
+                        </button>
+                        <button type="button" onclick="setScreenScale(1.0)" class="px-2 py-0.5 rounded-lg bg-white/20 text-white font-bold hover:bg-white/30 transition active:scale-95" title="ขนาดมาตรฐาน (100%)">
+                            100%
+                        </button>
+                        <button type="button" onclick="setScreenScale(1.15)" class="px-2 py-0.5 rounded-lg hover:bg-white/20 transition active:scale-95 text-blue-100 font-bold" title="ขยายขนาด (115%)">
+                            <i class="fas fa-magnifying-glass-plus"></i> 115%
+                        </button>
+                    </div>
+
+                    <button type="button" id="btnNavUser" onclick="switchView('user')" class="bg-white text-brand-900 hover:bg-blue-50 text-xs font-bold px-3.5 py-2 rounded-xl shadow transition inline-flex items-center gap-1.5">
+                        <i class="fas fa-edit"></i> ฟอร์มแจ้งซ่อม
                     </button>
 
-                    <div id="adminLoggedInButtons" class="hidden flex items-center gap-2">
-                        <button type="button" id="btnNavAdmin" onclick="switchView('admin')" class="bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow transition inline-flex items-center gap-1.5">
-                            <i class="fas fa-sliders"></i> จัดการงานซ่อม
+                    <div id="adminAuthArea" class="flex items-center gap-2">
+                        <button type="button" id="btnLoginNav" onclick="openModal('adminLoginModal')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black px-4 py-2 rounded-xl shadow-lg transition inline-flex items-center gap-1.5 ring-2 ring-amber-300 active:scale-95">
+                            <i class="fas fa-lock"></i> 🔐 เจ้าหน้าที่
                         </button>
-                        <button type="button" onclick="logoutAdmin()" class="bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow transition inline-flex items-center gap-1.5 active:scale-95" title="ออกจากระบบ">
-                            <i class="fas fa-right-from-bracket"></i> ออกจากระบบ
-                        </button>
+
+                        <div id="adminLoggedInButtons" class="hidden flex items-center gap-2">
+                            <button type="button" id="btnNavAdmin" onclick="switchView('admin')" class="bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow transition inline-flex items-center gap-1.5">
+                                <i class="fas fa-sliders"></i> จัดการงานซ่อม
+                            </button>
+                            <button type="button" onclick="logoutAdmin()" class="bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow transition inline-flex items-center gap-1.5 active:scale-95" title="ออกจากระบบ">
+                                <i class="fas fa-right-from-bracket"></i> ออกจากระบบ
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <div class="max-w-5xl mx-auto px-3 sm:px-6 no-print">
+        <div class="max-w-5xl mx-auto px-3 sm:px-6 no-print">
 
-        <!-- 1. หน้าจอสำหรับผู้ใช้งานทั่วไป (USER REPAIR FORM) -->
-        <section id="userSection" class="block">
-            <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-10">
+            <!-- 1. หน้าจอสำหรับผู้ใช้งานทั่วไป (USER REPAIR FORM) -->
+            <section id="userSection" class="block">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-10">
 
-                <div class="text-center border-b border-slate-100 pb-6 mb-6">
-                    <h2 class="text-xl sm:text-2xl font-bold text-slate-900">วิทยาลัยเทคโนโลยีพระมหาไถ่ พัทยา</h2>
-                    <h3 class="text-lg font-bold text-brand-900 underline decoration-2 underline-offset-4 mt-1">
-                        แบบรายงานการแจ้งซ่อม
-                    </h3>
+                    <div class="text-center border-b border-slate-100 pb-6 mb-6">
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900">วิทยาลัยเทคโนโลยีพระมหาไถ่ พัทยา</h2>
+                        <h3 class="text-lg font-bold text-brand-900 underline decoration-2 underline-offset-4 mt-1">
+                            แบบรายงานการแจ้งซ่อม
+                        </h3>
+                    </div>
+
+                    <div id="alertSuccess" class="hidden mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-center font-medium text-sm">
+                        <i class="fas fa-check-circle mr-1.5 text-emerald-600"></i> <span id="alertMsg">ส่งคำขอแจ้งซ่อมเรียบร้อยแล้ว</span>
+                    </div>
+
+                    <form id="repairUserForm" class="space-y-6">
+
+                        <!-- ข้อมูลผู้แจ้งและวันที่แจ้ง -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80">
+                            <div class="flex flex-col gap-1.5">
+                                <label for="reportDate" class="text-xs font-bold text-slate-700">วันที่แจ้งซ่อม <span class="text-rose-500">*</span></label>
+                                <input type="date" id="reportDate" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition" required>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="reporterName" class="text-xs font-bold text-slate-700">ชื่อผู้แจ้งซ่อม (ข้าพเจ้า) <span class="text-rose-500">*</span></label>
+                                <input type="text" id="reporterName" placeholder="ระบุชื่อ-นามสกุล" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition" required>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="reporterPosition" class="text-xs font-bold text-slate-700">ตำแหน่ง <span class="text-rose-500">*</span></label>
+                                <input type="text" id="reporterPosition" placeholder="เช่น ครูผู้สอน, เจ้าหน้าที่" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition" required>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="reporterDepartment" class="text-xs font-bold text-slate-700">ฝ่าย / แผนก <span class="text-rose-500">*</span></label>
+                                <input type="text" id="reporterDepartment" placeholder="เช่น เทคโนโลยีสารสนเทศ" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition" required>
+                            </div>
+                        </div>
+
+                        <div class="text-xs sm:text-sm text-slate-700 space-y-1">
+                            <p class="font-bold text-slate-800">เรียน หัวหน้าฝ่ายอาคารสถานที่</p>
+                            <p class="text-slate-500">ข้าพเจ้าขอแจ้งซ่อมดังต่อไปนี้ (โปรดระบุสิ่งที่ซ่อม อาการเสีย และสถานที่):</p>
+                        </div>
+
+                        <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm table-responsive-card">
+                            <table class="w-full text-left border-collapse min-w-[550px]" id="repairTable">
+                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs">
+                                    <tr>
+                                        <th class="py-3 px-3 text-center w-12 font-bold">ที่</th>
+                                        <th class="py-3 px-4 font-bold">รายการ (สิ่งที่ซ่อม / อาการเสีย) <span class="text-rose-500">*</span></th>
+                                        <th class="py-3 px-4 w-5/12 font-bold">สถานที่ (อาคาร / ชั้น / ห้อง) <span class="text-rose-500">*</span></th>
+                                        <th class="py-3 px-3 text-center w-16 font-bold">ลบ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="repairTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex justify-start items-center">
+                            <button type="button" onclick="addTableRow()" class="bg-blue-50 hover:bg-blue-100 text-brand-900 border border-blue-200 font-bold text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 transition active:scale-95">
+                                <i class="fas fa-plus"></i> เพิ่มรายการซ่อม
+                            </button>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-6">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <i class="fas fa-camera text-brand-900"></i> แนบรูปถ่ายจุดที่ชำรุดเสียหาย
+                                    <span class="text-slate-400 font-normal">(ช่วยให้ช่างเตรียมอะไหล่ได้ตรงจุด)</span>
+                                </label>
+                            </div>
+
+                            <div id="dropZoneArea" onclick="document.getElementById('repairPhoto').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="group relative border-2 border-dashed border-slate-300 hover:border-brand-900 bg-slate-50 hover:bg-blue-50/50 rounded-2xl p-6 text-center cursor-pointer transition-all duration-200">
+
+                                <input type="file" id="repairPhoto" accept="image/*" class="hidden">
+
+                                <div id="uploadPrompt" class="flex flex-col items-center justify-center gap-2">
+                                    <div class="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-brand-900 group-hover:scale-110 transition">
+                                        <i class="fas fa-cloud-arrow-up text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-700">คลิกเพื่อเลือกรูปภาพ หรือ ลากไฟล์มาวางที่นี่</p>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">รองรับไฟล์ JPG, PNG หรือถ่ายภาพจากกล้องมือถือได้โดยตรง</p>
+                                    </div>
+                                </div>
+
+                                <div id="photoPreviewContainer" class="hidden flex flex-col sm:flex-row items-center justify-center gap-4 py-2" onclick="event.stopPropagation()">
+                                    <div class="relative group/preview">
+                                        <img id="photoPreview" src="" alt="ตัวอย่างรูปภาพ" class="h-32 w-32 sm:h-36 sm:w-36 object-cover rounded-2xl border-2 border-white shadow-md">
+                                        <button type="button" onclick="removePhoto(event)" class="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition active:scale-95" title="ลบรูปภาพ">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="text-left space-y-1">
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                                            <i class="fas fa-check"></i> แนบรูปถ่ายเรียบร้อย
+                                        </span>
+                                        <p id="previewDetailText" class="text-xs text-slate-600 font-semibold"></p>
+                                        <button type="button" onclick="document.getElementById('repairPhoto').click()" class="text-xs text-brand-900 font-bold hover:underline inline-flex items-center gap-1 mt-1">
+                                            <i class="fas fa-arrows-rotate"></i> เปลี่ยนรูปภาพใหม่
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-6">
+                            <div class="flex flex-col gap-1.5">
+                                <label for="contactPhone" class="text-xs font-bold text-slate-700">เบอร์โทรศัพท์ติดต่อกลับ</label>
+                                <input type="tel" id="contactPhone" placeholder="เช่น 081-234-5678" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition">
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label for="additionalNote" class="text-xs font-bold text-slate-700">หมายเหตุเพิ่มเติม</label>
+                                <input type="text" id="additionalNote" placeholder="เช่น สะดวกให้เข้าซ่อมช่วงบ่าย" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition">
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-200 pt-6 flex justify-end gap-3">
+                            <button type="reset" onclick="resetForm()" class="border border-slate-300 hover:bg-slate-100 text-slate-600 font-semibold text-xs px-5 py-2.5 rounded-xl transition">
+                                ล้างข้อมูล
+                            </button>
+                            <button type="submit" id="btnSubmit" class="bg-brand-900 hover:bg-brand-800 active:scale-95 text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-xl shadow-md shadow-blue-950/20 transition inline-flex items-center gap-2">
+                                <i class="fas fa-paper-plane"></i> ส่งแบบรายงานการแจ้งซ่อม
+                            </button>
+                        </div>
+
+                    </form>
                 </div>
+            </section>
 
-                <div id="alertSuccess" class="hidden mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-center font-medium text-sm">
-                    <i class="fas fa-check-circle mr-1.5 text-emerald-600"></i> <span id="alertMsg">ส่งคำขอแจ้งซ่อมเรียบร้อยแล้ว</span>
-                </div>
+            <!-- 2. หน้าจอสำหรับผู้ดูแลระบบ (ADMIN MANAGEMENT DASHBOARD) -->
+            <section id="adminSection" class="hidden">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-8 space-y-6">
 
-                <form id="repairUserForm" class="space-y-6">
-
-                    <!-- ข้อมูลผู้แจ้งและวันที่แจ้ง -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50/80 p-5 rounded-2xl border border-slate-200/80">
-                        <div class="flex flex-col gap-1.5">
-                            <label for="reportDate" class="text-xs font-bold text-slate-700">วันที่แจ้งซ่อม <span class="text-rose-500">*</span></label>
-                            <input type="date" id="reportDate" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition" required>
+                    <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-5">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fas fa-sliders text-brand-900"></i> ระบบจัดการและแก้ไขข้อมูลการแจ้งซ่อม
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">ตรวจสอบ แก้ไขรายละเอียด มอบหมายงานช่าง และพิมพ์ใบแจ้งซ่อม</p>
                         </div>
-
-                        <div class="flex flex-col gap-1.5">
-                            <label for="reporterName" class="text-xs font-bold text-slate-700">ชื่อผู้แจ้งซ่อม (ข้าพเจ้า) <span class="text-rose-500">*</span></label>
-                            <input type="text" id="reporterName" placeholder="ระบุชื่อ-นามสกุล" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition" required>
-                        </div>
-
-                        <div class="flex flex-col gap-1.5">
-                            <label for="reporterPosition" class="text-xs font-bold text-slate-700">ตำแหน่ง <span class="text-rose-500">*</span></label>
-                            <input type="text" id="reporterPosition" placeholder="เช่น ครูผู้สอน, เจ้าหน้าที่" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition" required>
-                        </div>
-
-                        <div class="flex flex-col gap-1.5">
-                            <label for="reporterDepartment" class="text-xs font-bold text-slate-700">ฝ่าย / แผนก <span class="text-rose-500">*</span></label>
-                            <input type="text" id="reporterDepartment" placeholder="เช่น เทคโนโลยีสารสนเทศ" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition" required>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+                                <i class="fas fa-shield-halved mr-1"></i> เข้าสู่ระบบด้วย: Super Admin
+                            </span>
+                            <button type="button" onclick="logoutAdmin()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5">
+                                <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                            </button>
                         </div>
                     </div>
 
-                    <div class="text-xs sm:text-sm text-slate-700 space-y-1">
-                        <p class="font-bold text-slate-800">เรียน หัวหน้าฝ่ายอาคารสถานที่</p>
-                        <p class="text-slate-500">ข้าพเจ้าขอแจ้งซ่อมดังต่อไปนี้ (โปรดระบุสิ่งที่ซ่อม อาการเสีย และสถานที่):</p>
+                    <div class="flex flex-wrap gap-3 items-center justify-between">
+                        <div class="flex items-center gap-2 flex-1 max-w-sm">
+                            <div class="relative w-full">
+                                <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+                                <input type="text" id="adminSearchInput" oninput="renderAdminTable()" placeholder="ค้นหาชื่อ, รหัสใบงาน, หรือสถานที่..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-900 focus:border-brand-900 transition">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <label for="adminFilterStatus" class="text-xs font-bold text-slate-600">สถานะ:</label>
+                            <select id="adminFilterStatus" onchange="renderAdminTable()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-900">
+                                <option value="ALL">ทั้งหมด</option>
+                                <option value="PENDING">รอรับเรื่อง</option>
+                                <option value="IN_PROGRESS">กำลังดำเนินการ</option>
+                                <option value="COMPLETED">ซ่อมเสร็จสิ้น</option>
+                                <option value="CANCELLED">ยกเลิก</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm">
-                        <table class="w-full text-left border-collapse" id="repairTable">
+                    <div class="overflow-x-auto border border-slate-200 rounded-2xl table-responsive-card">
+                        <table class="w-full text-left border-collapse min-w-[700px]" id="adminTable">
                             <thead class="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs">
                                 <tr>
-                                    <th class="py-3 px-3 text-center w-12 font-bold">ที่</th>
-                                    <th class="py-3 px-4 font-bold">รายการ (สิ่งที่ซ่อม / อาการเสีย) <span class="text-rose-500">*</span></th>
-                                    <th class="py-3 px-4 w-5/12 font-bold">สถานที่ (อาคาร / ชั้น / ห้อง) <span class="text-rose-500">*</span></th>
-                                    <th class="py-3 px-3 text-center w-16 font-bold">ลบ</th>
+                                    <th class="py-3.5 px-3 text-center w-28 font-bold">รหัสใบงาน</th>
+                                    <th class="py-3.5 px-3 text-center w-24 font-bold">วันที่แจ้ง</th>
+                                    <th class="py-3.5 px-4 font-bold">ผู้แจ้ง / แผนก</th>
+                                    <th class="py-3.5 px-4 font-bold">รายการชำรุด & สถานที่</th>
+                                    <th class="py-3.5 px-3 text-center w-28 font-bold">ช่างรับผิดชอบ</th>
+                                    <th class="py-3.5 px-3 text-center w-32 font-bold">สถานะ</th>
+                                    <th class="py-3.5 px-3 text-center w-32 font-bold">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="repairTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
+                            <tbody id="adminTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
                         </table>
                     </div>
 
-                    <div class="flex justify-start items-center">
-                        <button type="button" onclick="addTableRow()" class="bg-blue-50 hover:bg-blue-100 text-brand-900 border border-blue-200 font-bold text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 transition active:scale-95">
-                            <i class="fas fa-plus"></i> เพิ่มรายการซ่อม
-                        </button>
+                    <div id="adminEmptyMsg" class="hidden text-center py-10 text-slate-400 text-xs">
+                        <i class="fas fa-folder-open text-3xl mb-2 block text-slate-300"></i> ยังไม่มีรายการข้อมูลแจ้งซ่อมในระบบ
                     </div>
 
-                    <div class="border-t border-slate-100 pt-6">
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                                <i class="fas fa-camera text-brand-900"></i> แนบรูปถ่ายจุดที่ชำรุดเสียหาย
-                                <span class="text-slate-400 font-normal">(ช่วยให้ช่างเตรียมอะไหล่ได้ตรงจุด)</span>
-                            </label>
-                        </div>
-
-                        <div id="dropZoneArea" onclick="document.getElementById('repairPhoto').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="group relative border-2 border-dashed border-slate-300 hover:border-brand-900 bg-slate-50 hover:bg-blue-50/50 rounded-2xl p-6 text-center cursor-pointer transition-all duration-200">
-
-                            <input type="file" id="repairPhoto" accept="image/*" class="hidden">
-
-                            <div id="uploadPrompt" class="flex flex-col items-center justify-center gap-2">
-                                <div class="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-brand-900 group-hover:scale-110 transition">
-                                    <i class="fas fa-cloud-arrow-up text-lg"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold text-slate-700">คลิกเพื่อเลือกรูปภาพ หรือ ลากไฟล์มาวางที่นี่</p>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">รองรับไฟล์ JPG, PNG หรือถ่ายภาพจากกล้องมือถือได้โดยตรง</p>
-                                </div>
-                            </div>
-
-                            <div id="photoPreviewContainer" class="hidden flex flex-col sm:flex-row items-center justify-center gap-4 py-2" onclick="event.stopPropagation()">
-                                <div class="relative group/preview">
-                                    <img id="photoPreview" src="" alt="ตัวอย่างรูปภาพ" class="h-32 w-32 sm:h-36 sm:w-36 object-cover rounded-2xl border-2 border-white shadow-md">
-                                    <button type="button" onclick="removePhoto(event)" class="absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow-md transition active:scale-95" title="ลบรูปภาพ">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="text-left space-y-1">
-                                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                                        <i class="fas fa-check"></i> แนบรูปถ่ายเรียบร้อย
-                                    </span>
-                                    <p id="previewDetailText" class="text-xs text-slate-600 font-semibold"></p>
-                                    <button type="button" onclick="document.getElementById('repairPhoto').click()" class="text-xs text-brand-900 font-bold hover:underline inline-flex items-center gap-1 mt-1">
-                                        <i class="fas fa-arrows-rotate"></i> เปลี่ยนรูปภาพใหม่
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-6">
-                        <div class="flex flex-col gap-1.5">
-                            <label for="contactPhone" class="text-xs font-bold text-slate-700">เบอร์โทรศัพท์ติดต่อกลับ</label>
-                            <input type="tel" id="contactPhone" placeholder="เช่น 081-234-5678" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition">
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label for="additionalNote" class="text-xs font-bold text-slate-700">หมายเหตุเพิ่มเติม</label>
-                            <input type="text" id="additionalNote" placeholder="เช่น สะดวกให้เข้าซ่อมช่วงบ่าย" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-900 focus:border-brand-900 outline-none transition">
-                        </div>
-                    </div>
-
-                    <div class="border-t border-slate-200 pt-6 flex justify-end gap-3">
-                        <button type="reset" onclick="resetForm()" class="border border-slate-300 hover:bg-slate-100 text-slate-600 font-semibold text-xs px-5 py-2.5 rounded-xl transition">
-                            ล้างข้อมูล
-                        </button>
-                        <button type="submit" id="btnSubmit" class="bg-brand-900 hover:bg-brand-800 active:scale-95 text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-xl shadow-md shadow-blue-950/20 transition inline-flex items-center gap-2">
-                            <i class="fas fa-paper-plane"></i> ส่งแบบรายงานการแจ้งซ่อม
-                        </button>
-                    </div>
-
-                </form>
-            </div>
-        </section>
-
-        <!-- 2. หน้าจอสำหรับผู้ดูแลระบบ (ADMIN MANAGEMENT DASHBOARD) -->
-        <section id="adminSection" class="hidden">
-            <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-8 space-y-6">
-
-                <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-5">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fas fa-sliders text-brand-900"></i> ระบบจัดการและแก้ไขข้อมูลการแจ้งซ่อม
-                        </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">ตรวจสอบ แก้ไขรายละเอียด มอบหมายงานช่าง และพิมพ์ใบแจ้งซ่อม</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
-                            <i class="fas fa-shield-halved mr-1"></i> เข้าสู่ระบบด้วย: Super Admin
-                        </span>
-                        <button type="button" onclick="logoutAdmin()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1.5">
-                            <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
-                        </button>
-                    </div>
                 </div>
+            </section>
 
-                <div class="flex flex-wrap gap-3 items-center justify-between">
-                    <div class="flex items-center gap-2 flex-1 max-w-sm">
-                        <div class="relative w-full">
-                            <i class="fas fa-search absolute left-3.5 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="adminSearchInput" oninput="renderAdminTable()" placeholder="ค้นหาชื่อ, รหัสใบงาน, หรือสถานที่..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs outline-none focus:ring-2 focus:ring-brand-900 focus:border-brand-900 transition">
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <label for="adminFilterStatus" class="text-xs font-bold text-slate-600">สถานะ:</label>
-                        <select id="adminFilterStatus" onchange="renderAdminTable()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-brand-900">
-                            <option value="ALL">ทั้งหมด</option>
-                            <option value="PENDING">รอรับเรื่อง</option>
-                            <option value="IN_PROGRESS">กำลังดำเนินการ</option>
-                            <option value="COMPLETED">ซ่อมเสร็จสิ้น</option>
-                            <option value="CANCELLED">ยกเลิก</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-                    <table class="w-full text-left border-collapse" id="adminTable">
-                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs">
-                            <tr>
-                                <th class="py-3.5 px-3 text-center w-28 font-bold">รหัสใบงาน</th>
-                                <th class="py-3.5 px-3 text-center w-24 font-bold">วันที่แจ้ง</th>
-                                <th class="py-3.5 px-4 font-bold">ผู้แจ้ง / แผนก</th>
-                                <th class="py-3.5 px-4 font-bold">รายการชำรุด & สถานที่</th>
-                                <th class="py-3.5 px-3 text-center w-28 font-bold">ช่างรับผิดชอบ</th>
-                                <th class="py-3.5 px-3 text-center w-32 font-bold">สถานะ</th>
-                                <th class="py-3.5 px-3 text-center w-32 font-bold">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminTableBody" class="divide-y divide-slate-100 text-xs"></tbody>
-                    </table>
-                </div>
-
-                <div id="adminEmptyMsg" class="hidden text-center py-10 text-slate-400 text-xs">
-                    <i class="fas fa-folder-open text-3xl mb-2 block text-slate-300"></i> ยังไม่มีรายการข้อมูลแจ้งซ่อมในระบบ
-                </div>
-
-            </div>
-        </section>
-
+        </div>
     </div>
 
     <!-- Container สำหรับปริ้นท์เอกสารตามฟอร์มทางการ -->
@@ -493,6 +532,7 @@
         const STORAGE_KEY = "PRTC_REPAIR_RECORDS";
         const SESSION_KEY = "PRTC_ADMIN_SESSION";
         const VIEW_KEY = "PRTC_ACTIVE_VIEW";
+        const SCALE_KEY = "PRTC_APP_SCALE";
 
         let repairList = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
@@ -502,8 +542,34 @@
 
         let isAdminLoggedIn = localStorage.getItem(SESSION_KEY) === "true";
 
+        // ฟังก์ชันปรับอัตราส่วนขนาดหน้าจอ (Scale / Zoom Function)
+        function setScreenScale(scaleValue) {
+            const scaler = document.getElementById('app-scaler');
+            if (scaler) {
+                scaler.style.transform = `scale(${scaleValue})`;
+                scaler.style.transformOrigin = 'top center';
+
+                // คำนวณความกว้างเพื่อป้องกันขอบล้น
+                if (scaleValue > 1) {
+                    scaler.style.width = `${100 / scaleValue}%`;
+                    scaler.style.margin = '0 auto';
+                } else {
+                    scaler.style.width = '100%';
+                    scaler.style.margin = '0';
+                }
+
+                localStorage.setItem(SCALE_KEY, scaleValue);
+            }
+        }
+
         // ควบคุมหน้าจอ Loading Screen (1.5 วินาที)
         window.addEventListener('load', () => {
+            // โหลดค่าอัตราส่วนเดิมที่ผู้ใช้เคยตั้งไว้
+            const savedScale = localStorage.getItem(SCALE_KEY);
+            if (savedScale) {
+                setScreenScale(parseFloat(savedScale));
+            }
+
             setTimeout(() => {
                 const loader = document.getElementById('loadingScreen');
                 if (loader) {
