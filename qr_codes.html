@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Codes พิมพ์ติดประจำห้อง - PRTC</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Sarabun -->
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- QRCode.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background-color: #f8fafc;
+    }
+    @media print {
+      body {
+        background-color: white;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-6 md:p-12">
+
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="border-b pb-4 mb-6 flex flex-wrap justify-between items-center gap-4 no-print">
+      <div>
+        <h1 class="text-xl font-bold text-slate-800">📋 แผ่นพิมพ์รหัส QR Code ประจำพิกัดห้อง</h1>
+        <p class="text-xs text-slate-500 mt-1">สามารถพิมพ์หน้านี้ไปตัดและติดไว้ที่หน้าห้องเรียน/จุดบริการ เมื่อแสกนผ่านกล้องโทรศัพท์จะกรอกสถานที่ให้อัตโนมัติในใบแจ้งซ่อม</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="bg-blue-900 hover:bg-blue-800 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow-sm transition">
+          🖨️ พิมพ์แผ่น QR Codes
+        </button>
+        <a href="index.html" class="bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-2 rounded-lg transition">
+          ⬅️ กลับสู่ระบบแจ้งซ่อม
+        </a>
+      </div>
+    </div>
+
+    <!-- Alert / Demo Hint -->
+    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-800 mb-6 no-print">
+      💡 <strong>สำหรับการทดสอบบนคอมพิวเตอร์:</strong> คุณสามารถ <strong>"คลิก"</strong> ที่บัตรพิกัดห้องใดก็ได้ ระบบจะจำลองการสแกนโดยเปิดหน้าใบแจ้งซ่อมในแท็บใหม่และป้อนสถานที่ให้ทันที
+    </div>
+
+    <!-- Grid of QR Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      
+      <!-- Card 1 -->
+      <div onclick="redirectToApp('QR-001')" class="bg-white border-2 border-dashed border-slate-300 p-6 rounded-2xl flex flex-col items-center justify-between gap-4 cursor-pointer hover:border-blue-900 hover:bg-blue-50/20 transition duration-200">
+        <div class="text-center">
+          <span class="bg-blue-100 text-blue-900 text-3xs font-extrabold px-2.5 py-0.5 rounded-full">QR-001</span>
+          <h2 class="text-base font-bold text-slate-800 mt-1">ห้องคอมพิวเตอร์ 101</h2>
+          <p class="text-2xs text-slate-400">อาคาร 1 ชั้น 2 วิทยาลัยเทคโนโลยีพระมหาไถ่</p>
+        </div>
+        <div id="qrcode-001" class="p-2 bg-white border border-slate-200 rounded-lg shadow-inner"></div>
+        <div class="text-2xs text-slate-400 font-mono no-print">คลิกเพื่อจำลองสแกน ➔</div>
+      </div>
+
+      <!-- Card 2 -->
+      <div onclick="redirectToApp('QR-002')" class="bg-white border-2 border-dashed border-slate-300 p-6 rounded-2xl flex flex-col items-center justify-between gap-4 cursor-pointer hover:border-blue-900 hover:bg-blue-50/20 transition duration-200">
+        <div class="text-center">
+          <span class="bg-blue-100 text-blue-900 text-3xs font-extrabold px-2.5 py-0.5 rounded-full">QR-002</span>
+          <h2 class="text-base font-bold text-slate-800 mt-1">ห้องเรียนวิชาการ 302</h2>
+          <p class="text-2xs text-slate-400">อาคาร 2 ชั้น 3 วิทยาลัยเทคโนโลยีพระมหาไถ่</p>
+        </div>
+        <div id="qrcode-002" class="p-2 bg-white border border-slate-200 rounded-lg shadow-inner"></div>
+        <div class="text-2xs text-slate-400 font-mono no-print">คลิกเพื่อจำลองสแกน ➔</div>
+      </div>
+
+      <!-- Card 3 -->
+      <div onclick="redirectToApp('QR-003')" class="bg-white border-2 border-dashed border-slate-300 p-6 rounded-2xl flex flex-col items-center justify-between gap-4 cursor-pointer hover:border-blue-900 hover:bg-blue-50/20 transition duration-200">
+        <div class="text-center">
+          <span class="bg-blue-100 text-blue-900 text-3xs font-extrabold px-2.5 py-0.5 rounded-full">QR-003</span>
+          <h2 class="text-base font-bold text-slate-800 mt-1">สหกรณ์โรงเรียน</h2>
+          <p class="text-2xs text-slate-400">หอประชุมใหญ่ ชั้น 1 วิทยาลัยเทคโนโลยีพระมหาไถ่</p>
+        </div>
+        <div id="qrcode-003" class="p-2 bg-white border border-slate-200 rounded-lg shadow-inner"></div>
+        <div class="text-2xs text-slate-400 font-mono no-print">คลิกเพื่อจำลองสแกน ➔</div>
+      </div>
+
+      <!-- Card 4 -->
+      <div onclick="redirectToApp('QR-004')" class="bg-white border-2 border-dashed border-slate-300 p-6 rounded-2xl flex flex-col items-center justify-between gap-4 cursor-pointer hover:border-blue-900 hover:bg-blue-50/20 transition duration-200">
+        <div class="text-center">
+          <span class="bg-blue-100 text-blue-900 text-3xs font-extrabold px-2.5 py-0.5 rounded-full">QR-004</span>
+          <h2 class="text-base font-bold text-slate-800 mt-1">ห้องปกครอง</h2>
+          <p class="text-2xs text-slate-400">อาคารอำนวยการ ชั้น 1 วิทยาลัยเทคโนโลยีพระมหาไถ่</p>
+        </div>
+        <div id="qrcode-004" class="p-2 bg-white border border-slate-200 rounded-lg shadow-inner"></div>
+        <div class="text-2xs text-slate-400 font-mono no-print">คลิกเพื่อจำลองสแกน ➔</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Get host location to make QR codes point correctly to local file server if running
+    const baseAppUrl = window.location.href.substring(0, window.location.href.lastIndexOf("/")) + "/index.html";
+
+    // Generate QRs
+    new QRCode(document.getElementById("qrcode-001"), {
+      text: `${baseAppUrl}?qr=QR-001`,
+      width: 128,
+      height: 128,
+      colorDark : "#1e3a8a",
+      colorLight : "#ffffff"
+    });
+
+    new QRCode(document.getElementById("qrcode-002"), {
+      text: `${baseAppUrl}?qr=QR-002`,
+      width: 128,
+      height: 128,
+      colorDark : "#1e3a8a",
+      colorLight : "#ffffff"
+    });
+
+    new QRCode(document.getElementById("qrcode-003"), {
+      text: `${baseAppUrl}?qr=QR-003`,
+      width: 128,
+      height: 128,
+      colorDark : "#1e3a8a",
+      colorLight : "#ffffff"
+    });
+
+    new QRCode(document.getElementById("qrcode-004"), {
+      text: `${baseAppUrl}?qr=QR-004`,
+      width: 128,
+      height: 128,
+      colorDark : "#1e3a8a",
+      colorLight : "#ffffff"
+    });
+
+    // Simulate Scan Redirect
+    function redirectToApp(qrId) {
+      window.open(`index.html?qr=${qrId}`, '_blank');
+    }
+  </script>
+</body>
+</html>
